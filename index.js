@@ -1,13 +1,15 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
 const users = new Set();
 
-app.get('/', (req,res) => {
-    //res.send('<h1>Hello World</h1>');
-    res.sendFile(__dirname + '/index.html');
-});
+app.use(express.static('public'));
+// app.get('/', (req,res) => {
+//     //res.send('<h1>Hello World</h1>');
+//     res.sendFile(__dirname + '/index.html');
+// });
 
 io.on('connection', (socket) => {
 
