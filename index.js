@@ -18,18 +18,20 @@ io.on('connection', (socket) => {
     })
 
     socket.on('add user', user => {
+        if(users.has(user)) {
+            socket.emit('nick taken',user);
+            return;
+        }
         users.add(user);
-        console.log(users);
         socket.user = user;
         io.emit('chat message', `${user} joined the chat!`)
-        io.emit('user list', {users: [...users]})
+        io.emit('user add', {users: [...users]})
     })
 
     socket.on('disconnect', () => {
         users.delete(socket.user);
-        io.emit('user list', {users: [...users]})
+        io.emit('user left', {users: [...users]})
         io.emit('chat message', `${socket.user} has left the chat`)
-        console.log(`user ${socket.user} disconnected`);
     })
 })
 

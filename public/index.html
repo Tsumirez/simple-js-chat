@@ -41,11 +41,13 @@
         Object.seal(msgHistory);
         //initializing variable for traversing the array.
         let historyCursor = 0;
+        //number of history entries in array that aren't empty fills, maximum of array's own length
+        let historyLen = 0; 
 
         //up-down arrow key press interception and filling user's chat box with selected, previously used line from history. 
         input.addEventListener('keydown', (e) => {
-            if(e.keyCode==38 || e.keyCode == 40) {
-                historyCursor = (((historyCursor+39-e.keyCode) % msgHistory.length +1) || msgHistory.length) -1;
+            if((e.keyCode==38 || e.keyCode == 40) && historyLen>0) {
+                historyCursor = (((historyCursor+39-e.keyCode) % historyLen +1) || historyLen) -1;
                 input.value = msgHistory[historyCursor];
             }
         })
@@ -60,6 +62,7 @@
                     msgHistory[z] = msgHistory[z-1];
                 }
                 msgHistory[0] =input.value;
+                historyLen += !!(0 || msgHistory.length - historyLen);
                 //sending user message to server.
                 socket.emit('chat message', input.value);
                 //clearing the text field
@@ -70,10 +73,6 @@
             if(!nick.disabled && nick.value) {
                 //sending your chosen username to server
                 socket.emit('add user', nick.value);
-                //blocking nick field, enabling text box
-                nick.disabled= true ;
-                input.disabled = false;
-                input.focus();
             }
         });
 
@@ -88,7 +87,7 @@
         })
 
         //updating user list with one received from the server
-        socket.on('user list', usersObj => {   
+        function updateUsers(usersObj) {   
             activeUsers.replaceChildren();        
             usersObj.users.forEach(user =>  {
                 let namePlate = document.createElement('li');
@@ -97,8 +96,25 @@
                 userLink.textContent = user;
                 namePlate.appendChild(userLink);
                 activeUsers.appendChild(namePlate);
-            });   
+            })
+        }
+
+        socket.on('user add', userList => {
+                //blocking nick field, enabling text box
+                nick.disabled= true ;
+                input.disabled = false;
+                input.focus();
+                updateUsers(userList);
         });
+
+        socket.on('user left', userList =>{
+            updateUsers(userList);
+        })
+
+        socket.on('nick taken', takenNick => {
+            nick.value='';
+            nick.placeholder = 'This nick is already taken';
+        })
     </script>
   </body>
 </html>
