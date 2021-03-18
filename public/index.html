@@ -1,29 +1,48 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- firefox will demand icon no matter what, so this feeds it so there's no barrage of 404 calls to the server -->
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link rel="stylesheet" href="main.css">
     <title>Zef websockets chat</title>
   </head>
   <body>
+    <!-- main chat window -->
     <ul id="messages"></ul>
+
+    <!-- chat users list on side -->
     <ul id ="activeUsers"></ul>
+
+    <!-- bottom form where you enter your nick and message -->
     <form id="form" action="">
         <input type="text" id="nick" placeholder="your nick">
         <input id="input" autocomplete="off" disabled/><button>Send</button>
     </form>
 
+    <!-- END OF HTML -->
+
+    <!-- client side java script to make it work -->
     <script src="/socket.io/socket.io.js" type="text/javascript"></script>
     <script>
+        //initialization of client side web socket
         var socket = io();
+        //creating a list of and initializing html DOM objects for form and chat display manipulation
         let elems = ['messages', 'form','input','nick', 'activeUsers'];
         for(elem of elems) {this[elem] = document.getElementById(elem)}
 
+
+        //USER INPUT HISTORY FUNCTIONALITY
+
+        //creating a fixed, limited size array to store recent text submitted by the user.
         let msgHistory = new Array(3);
+        //before sealing an array it's fields must be filled with something else they'll become immutable.
         msgHistory.fill(undefined);
+        //sealing the array so it's size constraint is not allowed to be broken
         Object.seal(msgHistory);
+        //initializing variable for traversing the array.
         let historyCursor = 0;
 
+        //up-down arrow key press interception and filling user's chat box with selected, previously used line from history. 
         input.addEventListener('keydown', (e) => {
             if(e.keyCode==38 || e.keyCode == 40) {
                 historyCursor = (((historyCursor+39-e.keyCode) % msgHistory.length +1) || msgHistory.length) -1;
@@ -31,26 +50,36 @@
             }
         })
 
+        //USER NICK SELECTION AND TEXT INPUT FUNCTIONALITY
         form.addEventListener('submit', e => {
             e.preventDefault();
+            //sumbitting text message. If nick is not yet chosen it'll be blocked.
             if(!input.disabled && input.value) {
+                //moving the most recent message into start of history array while erasing oldest one
                 for(let z = msgHistory.length-1; z>0; z--) {
                     msgHistory[z] = msgHistory[z-1];
                 }
                 msgHistory[0] =input.value;
-                console.log(msgHistory);
+                //sending user message to server.
                 socket.emit('chat message', input.value);
+                //clearing the text field
                 input.value = '';
             }
 
+            //sumbiting your chat nick
             if(!nick.disabled && nick.value) {
+                //sending your chosen username to server
                 socket.emit('add user', nick.value);
+                //blocking nick field, enabling text box
                 nick.disabled= true ;
                 input.disabled = false;
                 input.focus();
             }
         });
 
+        //RESPONDING TO MESSAGES FROM THE SERVER
+
+        //updating chat main window with new message
         socket.on('chat message', function(msg){
             let item = document.createElement('li');
             item.textContent = msg;
@@ -58,6 +87,7 @@
             window.scrollTo(0, document.body.scrollHeight);
         })
 
+        //updating user list with one received from the server
         socket.on('user list', usersObj => {   
             activeUsers.replaceChildren();        
             usersObj.users.forEach(user =>  {
