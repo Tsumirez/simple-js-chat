@@ -19,9 +19,26 @@
         let elems = ['messages', 'form','input','nick', 'activeUsers'];
         for(elem of elems) {this[elem] = document.getElementById(elem)}
 
+        let msgHistory = new Array(3);
+        msgHistory.fill(undefined);
+        Object.seal(msgHistory);
+        let historyCursor = 0;
+
+        input.addEventListener('keydown', (e) => {
+            if(e.keyCode==38 || e.keyCode == 40) {
+                historyCursor = (((historyCursor+39-e.keyCode) % msgHistory.length +1) || msgHistory.length) -1;
+                input.value = msgHistory[historyCursor];
+            }
+        })
+
         form.addEventListener('submit', e => {
             e.preventDefault();
             if(!input.disabled && input.value) {
+                for(let z = msgHistory.length-1; z>0; z--) {
+                    msgHistory[z] = msgHistory[z-1];
+                }
+                msgHistory[0] =input.value;
+                console.log(msgHistory);
                 socket.emit('chat message', input.value);
                 input.value = '';
             }
