@@ -26,7 +26,10 @@ io.on('connection', (socket) => {
     })
 
     socket.on('disconnect', () => {
-        console.log('user disconnected');
+        users.delete(socket.user);
+        io.emit('user list', {users: [...users]})
+        io.emit('chat message', `${socket.user} has left the chat`)
+        console.log(`user ${socket.user} disconnected`);
     })
 })
 
