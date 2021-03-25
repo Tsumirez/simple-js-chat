@@ -43,7 +43,12 @@
   #messages > li { padding: 0.5rem 1rem; }
   #messages > li:nth-child(odd) { background: #efefef; }
 
-  .private{
+  .private-sent{
     color: lime;
+    font-style: italic;
+  }
+
+  .private {
+    color: #e09;
     font-style: italic;
   }

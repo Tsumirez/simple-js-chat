@@ -54,6 +54,12 @@
                 historyCursor = (((historyCursor+39-e.keyCode) % historyLen +1) || historyLen) -1;
                 input.value = msgHistory[historyCursor];
             }
+
+            else if (e.keyCode==9) {
+                e.preventDefault();
+                to='';
+                nick.value = socket.user;
+            }
         })
 
         //USER NICK SELECTION AND TEXT INPUT FUNCTIONALITY
@@ -86,7 +92,10 @@
         //updating chat main window with new message
         socket.on('message', function({to,msg} = data){
             let item = document.createElement('li');
-            if (to) item.setAttribute('class','private')
+            if (to) {
+                let cssClass = (to === socket.user )?'private':'private-sent';
+                item.setAttribute('class', cssClass);
+            };
             item.textContent = msg;
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
@@ -96,6 +105,7 @@
             e.preventDefault();
             to = e.target.firstChild.textContent;
             nick.value = socket.user +` to ${to}`;
+            input.focus();
         }
 
         //updating user list with one received from the server
