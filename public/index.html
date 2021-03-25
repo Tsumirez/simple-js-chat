@@ -29,6 +29,7 @@
         //creating a list of and initializing html DOM objects for form and chat display manipulation
         let elems = ['messages', 'form','input','nick', 'activeUsers'];
         for(elem of elems) {this[elem] = document.getElementById(elem)}
+        to = ''; //receiver of message, empty string equals to all
 
         //focusing the nick selection input to get user started a.s.a.p.
         nick.focus();
@@ -67,7 +68,7 @@
                 msgHistory[0] =input.value;
                 historyLen += !!(0 || msgHistory.length - historyLen);
                 //sending user message to server.
-                socket.emit('chat message', input.value);
+                socket.emit('message', {to:to, msg: input.value});
                 //clearing the text field
                 input.value = '';
             }
@@ -76,18 +77,26 @@
             if(!nick.disabled && nick.value) {
                 //sending your chosen username to server
                 socket.emit('add user', nick.value);
+                socket.user = nick.value;
             }
         });
 
         //RESPONDING TO MESSAGES FROM THE SERVER
 
         //updating chat main window with new message
-        socket.on('chat message', function(msg){
+        socket.on('message', function({to,msg} = data){
             let item = document.createElement('li');
+            if (to) item.setAttribute('class','private')
             item.textContent = msg;
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
         })
+
+        function privateMessage(e) {
+            e.preventDefault();
+            to = e.target.firstChild.textContent;
+            nick.value = socket.user +` to ${to}`;
+        }
 
         //updating user list with one received from the server
         function updateUsers(usersObj) {   
@@ -97,6 +106,7 @@
                 let userLink = document.createElement('a');
                 userLink.setAttribute('href',user);
                 userLink.textContent = user;
+                userLink.addEventListener('click', privateMessage)
                 namePlate.appendChild(userLink);
                 activeUsers.appendChild(namePlate);
             })
