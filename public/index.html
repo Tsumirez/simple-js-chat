@@ -29,6 +29,7 @@
         //creating a list of and initializing html DOM objects for form and chat display manipulation
         let elems = ['messages', 'form','input','nick', 'activeUsers'];
         for(elem of elems) {this[elem] = document.getElementById(elem)}
+        let whispers = ['']
         to = ''; //receiver of message, empty string equals to all
 
         //focusing the nick selection input to get user started a.s.a.p.
@@ -43,8 +44,10 @@
         msgHistory.fill(undefined);
         //sealing the array so it's size constraint is not allowed to be broken
         Object.seal(msgHistory);
-        //initializing variable for traversing the array.
+        //initializing variable for traversing the chat history array.
         let historyCursor = 0;
+        //initializing variable for users whispered history
+        let whisperCursor =1;
         //number of history entries in array that aren't empty fills, maximum of array's own length
         let historyLen = 0; 
 
@@ -57,8 +60,9 @@
 
             else if (e.keyCode==9) {
                 e.preventDefault();
-                to='';
-                nick.value = socket.user;
+                whisperCursor = to?0:1;
+                to = whispers[whisperCursor];
+                nick.value = to?socket.user+ ' to '+ whispers[whisperCursor]:socket.user;
             }
         })
 
@@ -105,6 +109,10 @@
             e.preventDefault();
             to = e.target.firstChild.textContent;
             nick.value = socket.user +` to ${to}`;
+            let isStored = whispers.indexOf(to);
+            isStored+1 && whispers.splice(isStored,1);
+            whispers.splice(1,0,to);
+            console.log(whispers);
             input.focus();
         }
 
