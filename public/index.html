@@ -24,6 +24,24 @@
     <!-- client side java script to make it work -->
     <script src="/socket.io/socket.io.js" type="text/javascript"></script>
     <script>
+        //OOP code
+        function Chat(){
+            this.to = '';
+            let listeners = new Set();
+
+            this.addListener = function(object){
+                listeners.add(object);
+            }
+
+            this.setReceiver = function(nick){
+                const event = new CustomEvent('privateChat', {detail: nick});
+                for (elem of listeners) {
+                    elem.dispatchEvent(event);
+                }
+            }
+        }
+
+        let chat = new Chat;
         //initialization of client side web socket
         var socket = io();
         //creating a list of and initializing html DOM objects for form and chat display manipulation
@@ -32,6 +50,7 @@
         let whispers = ['']
         to = ''; //receiver of message, empty string equals to all
 
+        chat.addListener(input);
         //focusing the nick selection input to get user started a.s.a.p.
         nick.focus();
 
@@ -65,6 +84,8 @@
                 nick.value = to?socket.user+ ' to '+ whispers[whisperCursor]:socket.user;
             }
         })
+
+        input.addEventListener('privateChat', function(e) {console.log(e.detail)});
 
         //USER NICK SELECTION AND TEXT INPUT FUNCTIONALITY
         form.addEventListener('submit', e => {
@@ -108,11 +129,11 @@
         function privateMessage(e) {
             e.preventDefault();
             to = e.target.firstChild.textContent;
+            chat.setReceiver(to);
             nick.value = socket.user +` to ${to}`;
             let isStored = whispers.indexOf(to);
             isStored+1 && whispers.splice(isStored,1);
             whispers.splice(1,0,to);
-            console.log(whispers);
             input.focus();
         }
 
